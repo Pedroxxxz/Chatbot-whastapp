@@ -20,5 +20,8 @@ Um bot de atendimento automático para WhatsApp desenvolvido em **Node.js** util
 - [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js)
 - [qrcode-terminal](https://www.npmjs.com/package/qrcode-terminal)
 
+---
+## Inicie o bot:
+
 - node robo.js
   
