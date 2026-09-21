@@ -37,7 +37,7 @@ client.on('qr', qr => {
 });
 
 client.on('ready', () => {
-    console.log('Bot WhatsApp conectado com sucesso!');
+    console.log('Guia de Museus de Olinda conectado com sucesso!');
 });
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -52,10 +52,10 @@ client.on('message', async msg => {
         const currentContext = getUserContext(userId);
 
         // Obter nome do contacto de forma segura
-        let name = 'Cliente';
+        let name = 'Visitante';
         try {
             const contact = await msg.getContact();
-            name = contact.pushname || contact.name || 'Cliente';
+            name = contact.pushname || contact.name || 'Visitante';
         } catch (e) {
             // Caso falhe ao obter o contacto, mantém o padrão
         }
@@ -72,65 +72,70 @@ client.on('message', async msg => {
         // ------------------------------------------------------
         // 1. MENU INICIAL
         // ------------------------------------------------------
-        if (/^(oi|olá|ola|bom dia|boa tarde|boa noite|produtos|menu|começar|start)$/i.test(userMessage)) {
+        if (/^(oi|olá|ola|bom dia|boa tarde|boa noite|museus|menu|começar|start)$/i.test(userMessage)) {
             setUserContext(userId, null);
-            
+
             await delay(1000);
             await safeSendMessage(
-                `Olá ${name}! Seja bem-vindo(a) à nossa loja! 🏪\n\n` +
-                'Temos diversos produtos incríveis para você! Confira nossas categorias:\n\n' +
-                '🎮 Placas de Vídeo\n' +
-                '⌨️ Teclados Mecânicos\n' +
-                '🖱️ Mouses\n' +
-                '💾 Memórias RAM\n' +
-                '🔧 Placas-mãe\n' +
-                '💻 Processadores'
+                `Olá ${name}! Seja bem-vindo(a) ao Guia de Museus de Olinda! \n\n` +
+                'Posso ajudar você a conhecer alguns dos principais museus e espaços culturais da cidade.\n\n' +
+                ' Museu Regional de Olinda\n' +
+                ' Museu de Arte Sacra de Pernambuco\n' +
+                ' Museu do Mamulengo\n\n' +
+                'Você pode perguntar sobre a história, acervo, localização, horários ou ingresso.'
             );
 
             await delay(1500);
-            await safeSendMessage('Qual categoria você deseja consultar?');
+            await safeSendMessage('Qual museu ou informação você deseja consultar?');
             return;
         }
 
         // ------------------------------------------------------
-        // 2. SELEÇÃO DE CATEGORIAS
+        // 2. SELEÇÃO DE MUSEUS
         // ------------------------------------------------------
 
-        // Teclados
-        if (/teclado|teclados/i.test(userMessage)) {
-            setUserContext(userId, 'teclados');
+        // Museu Regional de Olinda
+        if (/museu regional|mureo|regional de olinda/i.test(userMessage)) {
+            setUserContext(userId, 'museu_regional');
             await delay(1000);
             await safeSendMessage(
-                '⌨️ *Teclados Mecânicos Disponíveis:*\n\n' +
-                '1. Redragon Kumara\n' +
-                '2. Logitech G213\n\n' +
-                'Digite o nome do modelo para ver detalhes e valor!'
+                ' *Museu Regional de Olinda (MUREO)*\n\n' +
+                'Localizado na Rua do Amparo, nº 128, o museu funciona em um solar colonial construído no século XVIII.\n\n' +
+                ' *Destaque:* seu acervo reúne móveis, porcelanas e imagens sacras que ajudam a conhecer os costumes e a história de outras épocas.\n\n' +
+                ' Funcionamento: terça a sexta, das 9h às 17h; sábados e domingos, das 14h às 17h.\n' +
+                ' Entrada: gratuita.\n\n' +
+                'Digite *menu* para consultar outro museu.'
             );
             return;
         }
 
-        // Mouses
-        if (/mouses|mouse/i.test(userMessage)) {
-            setUserContext(userId, 'mouses');
+        // Museu de Arte Sacra de Pernambuco
+        if (/arte sacra|maspe|museu de arte sacra/i.test(userMessage)) {
+            setUserContext(userId, 'museu_sacra');
             await delay(1000);
             await safeSendMessage(
-                '🖱️ *Mouses Disponíveis:*\n\n' +
-                '1. Redragon Cobra\n' +
-                '2. Havit MS1029\n\n' +
-                'Digite o nome do mouse desejado para mais informações!'
+                ' *Museu de Arte Sacra de Pernambuco (MASPE)*\n\n' +
+                'Está localizado em um casarão histórico no topo do Sítio Histórico de Olinda e foi fundado em 1977.\n\n' +
+                ' *Destaque:* possui um acervo de objetos de culto, pinturas religiosas, relicários, custódias e imagens de santos.\n\n' +
+                ' Rua Bispo Coutinho, 726 – Carmo.\n' +
+                ' Funcionamento: terça a sexta, das 10h às 17h; sábados e domingos, das 14h às 17h.\n' +
+                ' Ingresso: R$ 5,00. Crianças até 12 anos, idosos acima de 60 anos e pessoas com deficiência têm gratuidade, conforme as informações do museu.\n\n' +
+                'Digite *menu* para consultar outro museu.'
             );
             return;
         }
 
-        // Placas de Vídeo
-        if (/placa de video|placa de vídeo|placas de video|placas de vídeo/i.test(userMessage)) {
-            setUserContext(userId, 'placas_video');
+        // Museu do Mamulengo
+        if (/mamulengo|museu do mamulengo/i.test(userMessage)) {
+            setUserContext(userId, 'museu_mamulengo');
             await delay(1000);
             await safeSendMessage(
-                '🎮 *Placas de Vídeo Disponíveis:*\n\n' +
-                '1. GTX 1660 Super\n' +
-                '2. GTX 1650\n\n' +
-                'Digite o nome da placa para ver as especificações e preço!'
+                ' *Museu do Mamulengo*\n\n' +
+                'É um museu municipal de Olinda criado em 1994 e dedicado à preservação e valorização do mamulengo, importante manifestação do teatro popular.\n\n' +
+                ' *Destaque:* o espaço preserva a memória e a cultura relacionada aos tradicionais bonecos do teatro popular pernambucano.\n\n' +
+                ' Largo do Varadouro, s/n, Mercado Eufrásio Barbosa.\n' +
+                ' Funcionamento: terça a sábado, das 9h às 13h.\n\n' +
+                'Digite *menu* para consultar outro museu.'
             );
             return;
         }
@@ -139,51 +144,99 @@ client.on('message', async msg => {
         // 3. ATENDIMENTO BASEADO NO CONTEXTO
         // ------------------------------------------------------
 
-        if (currentContext === 'placas_video') {
-            if (/1660|gtx 1660|mancer/i.test(userMessage)) {
+        if (currentContext === 'museu_regional') {
+            if (/história|historia|acervo|o que tem|temática|tematica/i.test(userMessage)) {
                 await delay(1000);
                 await safeSendMessage(
-                    '🎮 *Mancer GTX 1660 Super Heimdall 6GB*\n' +
-                    '• VRAM: 6GB GDDR6\n' +
-                    '• Conectores: HDMI / DisplayPort / DVI\n' +
-                    '• Preço: R$ 1.215,00 à vista\n\n' +
+                    ' *Sobre o Museu Regional de Olinda*\n\n' +
+                    'O MUREO foi inaugurado em 1935 e está instalado em um solar colonial construído no século XVIII. Seu acervo possui móveis, porcelanas e imagens sacras, elementos que ajudam a representar os costumes e a história de uma época.\n\n' +
                     'Digite *menu* para voltar ao início.'
                 );
                 return;
             }
 
-            if (/1650|gtx 1650|galax/i.test(userMessage)) {
+            if (/onde|endereço|endereco|localização|localizacao/i.test(userMessage)) {
                 await delay(1000);
                 await safeSendMessage(
-                    '🎮 *Nvidia Galax GTX 1650 4GB*\n' +
-                    '• VRAM: 4GB GDDR5\n' +
-                    '• Conectores: HDMI / DisplayPort\n' +
-                    '• Preço: R$ 1.189,00 à vista\n\n' +
+                    ' *Localização do Museu Regional de Olinda:*\n' +
+                    'Rua do Amparo, nº 128 – Amparo, Olinda/PE.\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+
+            if (/horário|horario|abre|funciona|fechado/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    ' *Horário do Museu Regional de Olinda:*\n' +
+                    'Terça a sexta: 9h às 17h.\n' +
+                    'Sábados e domingos: 14h às 17h.\n' +
+                    'Segunda-feira: fechado.\n\n' +
                     'Digite *menu* para voltar ao início.'
                 );
                 return;
             }
         }
 
-        if (currentContext === 'mouses') {
-            if (/cobra|redragon/i.test(userMessage)) {
+        if (currentContext === 'museu_sacra') {
+            if (/história|historia|acervo|o que tem|temática|tematica/i.test(userMessage)) {
                 await delay(1000);
                 await safeSendMessage(
-                    '🖱️ *Redragon Cobra Chroma M711*\n' +
-                    '• DPI: Até 10.000 DPI\n' +
-                    '• Iluminação: RGB Chroma\n' +
-                    '• Preço: R$ 130,00\n\n' +
+                    '*Sobre o Museu de Arte Sacra de Pernambuco*\n\n' +
+                    'Fundado em 1977, o MASPE reúne objetos de culto, pinturas religiosas, relicários, custódias e imagens de santos. O museu está instalado em um casarão histórico no Sítio Histórico de Olinda.\n\n' +
                     'Digite *menu* para voltar ao início.'
                 );
                 return;
             }
 
-            if (/havit|1029/i.test(userMessage)) {
+            if (/onde|endereço|endereco|localização|localizacao/i.test(userMessage)) {
                 await delay(1000);
                 await safeSendMessage(
-                    '🖱️ *Havit MS1029*\n' +
-                    '• DPI: 2400 DPI\n' +
-                    '• Preço: R$ 69,90\n\n' +
+                    ' *Localização do MASPE:*\n' +
+                    'Rua Bispo Coutinho, 726 – Carmo, Olinda/PE.\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+
+            if (/horário|horario|abre|funciona|fechado/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    ' *Horário do MASPE:*\n' +
+                    'Terça a sexta: 10h às 17h.\n' +
+                    'Sábados e domingos: 14h às 17h.\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+        }
+
+        if (currentContext === 'museu_mamulengo') {
+            if (/história|historia|acervo|o que tem|temática|tematica/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    '*Sobre o Museu do Mamulengo*\n\n' +
+                    'Criado em 1994, o Museu do Mamulengo é uma instituição municipal dedicada ao mamulengo, manifestação tradicional do teatro popular. O espaço contribui para preservar a memória dessa expressão cultural.\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+
+            if (/onde|endereço|endereco|localização|localizacao/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    ' *Localização do Museu do Mamulengo:*\n' +
+                    'Largo do Varadouro, s/n – Mercado Eufrásio Barbosa, Olinda/PE.\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+
+            if (/horário|horario|abre|funciona|fechado/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    ' *Horário do Museu do Mamulengo:*\n' +
+                    'Terça a sábado: 9h às 13h.\n\n' +
                     'Digite *menu* para voltar ao início.'
                 );
                 return;
@@ -195,8 +248,9 @@ client.on('message', async msg => {
         // ------------------------------------------------------
         await delay(1000);
         await safeSendMessage(
-            'Desculpe, não entendi. 😅\n' +
-            'Digite o nome do produto desejado ou envie *menu* para voltar às opções.'
+            'Desculpe, não consegui encontrar essa informação. 😅\n' +
+            'Você pode perguntar pelo *Museu Regional de Olinda*, *Museu de Arte Sacra* ou *Museu do Mamulengo*.\n\n' +
+            'Digite *menu* para voltar às opções.'
         );
 
     } catch (err) {
@@ -215,4 +269,3 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 client.initialize();
-
