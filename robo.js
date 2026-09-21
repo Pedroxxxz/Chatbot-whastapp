@@ -1,27 +1,24 @@
-//CONFIGURAÇÕES
+const qrcode = require('qrcode-terminal');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 
-
-// Ativar permições
-const qrcode = require('qrcode-terminal');  //Permite gerar QRCODE para conectar com whatsapp
-const { Client } = require('whatsapp-web.js');  //Automatizar o envio de mensagens
-const { MessageMedia } = require('whatsapp-web.js');  // Para enviar mídia (fotos, vídeos, PDFs)
-
-
-
-
-
-
-// Configuração pra rodar a biblioteca do whatsapp-web
 const client = new Client({
-    puppeteer: {    //Permite o uso de um navegador sem interface gráfica
+    authStrategy: new LocalAuth(),
+    puppeteer: {
         headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
+        ]
     }
 });
 
-
 // Sistema de contextos
 const userContexts = {};
-
 
 function setUserContext(userId, context) {
     userContexts[userId] = {
@@ -30,225 +27,192 @@ function setUserContext(userId, context) {
     };
 }
 
-
 function getUserContext(userId) {
     return userContexts[userId]?.context || null;
 }
 
-
-// Configuração do QR Code
 client.on('qr', qr => {
+    console.log('Escaneie o QR Code abaixo:');
     qrcode.generate(qr, { small: true });
 });
 
-
 client.on('ready', () => {
-    console.log('Bot WhatsApp conectado!');
+    console.log('Bot WhatsApp conectado com sucesso!');
 });
 
-
-
-
-//Delay e receber mensagens
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-
 client.on('message', async msg => {
+    try {
+        // Ignorar mensagens de grupos e transmissões
+        if (msg.isGroup || msg.from.includes('@g.us') || msg.from.includes('@broadcast')) return;
 
+        const userId = msg.from;
+        const userMessage = msg.body ? msg.body.toLowerCase().trim() : '';
+        const currentContext = getUserContext(userId);
 
-
-
-
-
-    // PROTEÇÃO PARA NÃO ENVIAR EM GRUPOS DO WHATSAPP CONECTADO
-
-
-    // Verificações de segurança
-    if (msg.isGroup) return;
-    if (!msg.from.endsWith('@c.us')) return;
-    const chat = await msg.getChat();
-    if (chat.isGroup) return;
-
-
-    const userId = msg.from;
-    const userMessage = msg.body.toLowerCase();
-    const currentContext = getUserContext(userId);
-    const contact = await msg.getContact();
-    const name = contact.pushname;
-
-
-    // Função segura para envio
-    const safeSendMessage = async (message) => {
-        const finalChat = await msg.getChat();
-        if (finalChat.isGroup) return;
-        if (!msg.from.endsWith('@c.us')) return;
+        // Obter nome do contacto de forma segura
+        let name = 'Cliente';
         try {
-            await client.sendMessage(msg.from, message);
-        } catch (error) {
-            console.error('Erro ao enviar mensagem:', error);
+            const contact = await msg.getContact();
+            name = contact.pushname || contact.name || 'Cliente';
+        } catch (e) {
+            // Caso falhe ao obter o contacto, mantém o padrão
         }
-    };
 
+        // Função segura para envio de mensagens
+        const safeSendMessage = async (message) => {
+            try {
+                await client.sendMessage(userId, message);
+            } catch (error) {
+                console.error('Erro ao enviar mensagem:', error);
+            }
+        };
 
+        // ------------------------------------------------------
+        // 1. MENU INICIAL
+        // ------------------------------------------------------
+        if (/^(oi|olá|ola|bom dia|boa tarde|boa noite|produtos|menu|começar|start)$/i.test(userMessage)) {
+            setUserContext(userId, null);
+            
+            await delay(1000);
+            await safeSendMessage(
+                `Olá ${name}! Seja bem-vindo(a) à nossa loja! 🏪\n\n` +
+                'Temos diversos produtos incríveis para você! Confira nossas categorias:\n\n' +
+                '🎮 Placas de Vídeo\n' +
+                '⌨️ Teclados Mecânicos\n' +
+                '🖱️ Mouses\n' +
+                '💾 Memórias RAM\n' +
+                '🔧 Placas-mãe\n' +
+                '💻 Processadores'
+            );
 
+            await delay(1500);
+            await safeSendMessage('Qual categoria você deseja consultar?');
+            return;
+        }
 
-    // FIM DAS CONFIGURAÇÕES
+        // ------------------------------------------------------
+        // 2. SELEÇÃO DE CATEGORIAS
+        // ------------------------------------------------------
 
+        // Teclados
+        if (/teclado|teclados/i.test(userMessage)) {
+            setUserContext(userId, 'teclados');
+            await delay(1000);
+            await safeSendMessage(
+                '⌨️ *Teclados Mecânicos Disponíveis:*\n\n' +
+                '1. Redragon Kumara\n' +
+                '2. Logitech G213\n\n' +
+                'Digite o nome do modelo para ver detalhes e valor!'
+            );
+            return;
+        }
 
-    //------------------------------------------------------
+        // Mouses
+        if (/mouses|mouse/i.test(userMessage)) {
+            setUserContext(userId, 'mouses');
+            await delay(1000);
+            await safeSendMessage(
+                '🖱️ *Mouses Disponíveis:*\n\n' +
+                '1. Redragon Cobra\n' +
+                '2. Havit MS1029\n\n' +
+                'Digite o nome do mouse desejado para mais informações!'
+            );
+            return;
+        }
 
+        // Placas de Vídeo
+        if (/placa de video|placa de vídeo|placas de video|placas de vídeo/i.test(userMessage)) {
+            setUserContext(userId, 'placas_video');
+            await delay(1000);
+            await safeSendMessage(
+                '🎮 *Placas de Vídeo Disponíveis:*\n\n' +
+                '1. GTX 1660 Super\n' +
+                '2. GTX 1650\n\n' +
+                'Digite o nome da placa para ver as especificações e preço!'
+            );
+            return;
+        }
 
+        // ------------------------------------------------------
+        // 3. ATENDIMENTO BASEADO NO CONTEXTO
+        // ------------------------------------------------------
 
+        if (currentContext === 'placas_video') {
+            if (/1660|gtx 1660|mancer/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    '🎮 *Mancer GTX 1660 Super Heimdall 6GB*\n' +
+                    '• VRAM: 6GB GDDR6\n' +
+                    '• Conectores: HDMI / DisplayPort / DVI\n' +
+                    '• Preço: R$ 1.215,00 à vista\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
 
+            if (/1650|gtx 1650|galax/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    '🎮 *Nvidia Galax GTX 1650 4GB*\n' +
+                    '• VRAM: 4GB GDDR5\n' +
+                    '• Conectores: HDMI / DisplayPort\n' +
+                    '• Preço: R$ 1.189,00 à vista\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+        }
 
+        if (currentContext === 'mouses') {
+            if (/cobra|redragon/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    '🖱️ *Redragon Cobra Chroma M711*\n' +
+                    '• DPI: Até 10.000 DPI\n' +
+                    '• Iluminação: RGB Chroma\n' +
+                    '• Preço: R$ 130,00\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
 
-    // MENU INICIAL
+            if (/havit|1029/i.test(userMessage)) {
+                await delay(1000);
+                await safeSendMessage(
+                    '🖱️ *Havit MS1029*\n' +
+                    '• DPI: 2400 DPI\n' +
+                    '• Preço: R$ 69,90\n\n' +
+                    'Digite *menu* para voltar ao início.'
+                );
+                return;
+            }
+        }
 
-
-    if (/oi|olá|ola|bom dia|boa tarde|boa noite|produtos|menu|começar|start/i.test(userMessage)) {
-        setUserContext(userId, null);
-        await delay(1000);//entendendo a mensagem
-        await chat.sendStateTyping();//mostra palavra "digitando..."
-        await delay(2000); // Tempo de enviar a mensagem
-        await safeSendMessage(`Olá ${name}! Seja bem-vindo(a) à nossa loja! 🏪\n\n` +
-            'Temos diversos produtos incríveis para você! Confira nossas categorias:\n\n' +
-            '🎮 Placas de Vídeo\n' +
-            '⌨️ Teclados Mecânicos\n' +
-            '🖱️ Mouses\n' +
-            '💾 Memórias RAM\n' +
-            '🔧 Placas-mãe\n' +
-            '💻 Processadores');
-
-
-
-
-        //Precisa testar, se vai vim segunda mensagem depois de boas vindas
-        await delay(2000);
-        await chat.sendStateTyping();
-        await delay(2000);
-        await safeSendMessage('Qual produto vc deseja?');
-        return;
-    }
-
-
-    // FIM DO MENU INICIAL
-
-
-    //------------------------------------------------------
-
-
-
-
-    // SELEÇÃO DE CATEGORIAS COM LISTA DE PRODUTOS
-
-
-
-
-    //palavras chave de ativação da categoria
-    if (/teclado|teclados/i.test(userMessage)) {
-        setUserContext(userId, 'teclados');
-        await delay(1000); //entendendo a mensagem, evita que a mensagem seja enviada na hora.
-        await chat.sendStateTyping(); //mostra palavra "digitando..."
-        await delay(2000); // Tempo de enviar a mensagem
-        await safeSendMessage('⌨️ Teclados Mecânicos Disponíveis:');
-        return;
-    }
-
-
-
-
-    //palavras chave de ativação da categoria
-    if (/detalhes do produto|mouses/i.test(userMessage)) {
-        setUserContext(userId, 'mouses');
+        // ------------------------------------------------------
+        // 4. RESPOSTA PADRÃO
+        // ------------------------------------------------------
         await delay(1000);
-        await chat.sendStateTyping();
-        await delay(2000);
-        await safeSendMessage('🖱️ Mouses Disponíveis:\n\n' +
-            '1. Redragon Cobra Chroma M711 - R$ 130\n' +
-            '2. Havit Ms1029 - R$ 69,90\n\n' +
-            'Digite o nome do mouse ou marca que deseja mais informações!');
-        return;
+        await safeSendMessage(
+            'Desculpe, não entendi. 😅\n' +
+            'Digite o nome do produto desejado ou envie *menu* para voltar às opções.'
+        );
+
+    } catch (err) {
+        console.error('Erro no processamento da mensagem:', err);
     }
-
-
-
-
-    //palavras chave de ativação da categoria
-    if (/placa de video|placa de vídeo|placas de video|placas de vídeo|placa video|placa vídeo/i.test(userMessage)) {
-        setUserContext(userId, 'placas_video');
-        await delay(1000);
-        await chat.sendStateTyping();
-        await delay(2000);
-        await safeSendMessage('🎮 Placas de Vídeo Disponíveis:\n\n' +
-            '1. Mancer GTX 1660 Super Heimdall 6GB - R$ 1.215\n' +
-            '2. Nvidia Galax GTX 1650 4GB - R$ 1.189\n\n' +
-            'Digite o nome da placa ou marca que deseja mais informações!');
-        return;
-    }
-
-
-
-
-    //palavras chave de ativação da categoria
-    if (/meroria ram|Memórias RAM|ram/i.test(userMessage)) {
-        setUserContext(userId, 'memorias_ram');
-        await delay(2000);
-        await chat.sendStateTyping();
-        await delay(4000);
-        await safeSendMessage('Memórias RAMs Disponíveis:\n\n' +
-            '1. Memória Ram 16gb 3200mhz Ddr4 Vengeance Rgb Rs Corsair - R$ 272\n\n' +
-            'Digite o nome do teclado ou marca que deseja mais informações!');
-        return;
-    }
-
-
-
-
-    //Palavras chave de ativação da categoria
-    if (/Placas-mãe|placa mae|placa mãe|placas mãe/i.test(userMessage)) {
-        setUserContext(userId, 'placas_mae');
-        await delay(1000);
-        await chat.sendStateTyping();
-        await delay(2000);
-        await safeSendMessage('Placas-mães Disponíveis:\n\n' +
-            '1. Gigabyte P/ Amd Am4 B450m Gaming 2xddr4 Matx - R$ 521,46\n\n' +
-            'Digite o nome do teclado ou marca que deseja mais informações!');
-        return;
-    }
-
-
-
-
-    //palavras chave de ativação da categoria
-    if (/processador|processadores/i.test(userMessage)) {
-        setUserContext(userId, 'processadores');
-        await delay(1000);
-        await chat.sendStateTyping();
-        await delay(2000);
-        await safeSendMessage('Processadores Disponíveis:\n\n' +
-            '1. Intel Core i5-4590 de 4 núcleos e 3.7GHz de frequência com gráfica integrada - R$178\n\n' +
-            'Digite o nome do teclado ou marca que deseja mais informações!');
-        return;
-    }
-
-
-
-
-}
-);
-
-
-
+});
 
 // Limpeza automática de contextos antigos
 setInterval(() => {
     const now = Date.now();
     for (const userId in userContexts) {
-        if (now - userContexts[userId].timestamp > 30 * 60 * 1000) { // 30 minutos
+        if (now - userContexts[userId].timestamp > 30 * 60 * 1000) {
             delete userContexts[userId];
         }
     }
-}, 5 * 60 * 1000); // Verifica a cada 5 minutos
-
+}, 5 * 60 * 1000);
 
 client.initialize();
+
